@@ -1,3 +1,4 @@
+import setuptools
 from setuptools import setup, find_packages
 
 README = 'close remote SSH processes automatically'
@@ -11,7 +12,7 @@ tests_require = [
         ]
 
 setup(name='closer',
-      version='2.0.1',
+      version='2.0.2',
       description=README,
       long_description=README,
       url='https://github.com/haarcuba/closer',

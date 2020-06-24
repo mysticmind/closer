@@ -37,6 +37,7 @@ class Remote( object ):
         self._remotePopenDetails = dict( args = popenArgs, kwargs = popenKwargs )
         self._terminated = False
         self._closer = 'closer'
+        self._sshPort = 22
 
     def __repr__( self ):
         return str( self._remotePopenDetails )
@@ -57,17 +58,25 @@ class Remote( object ):
         assert killer in [ 'terminate', 'kill' ]
         self._killer = killer
 
+    @property
+    def sshPort( self ):
+        return self._sshPort
+
+    @sshPort.setter
+    def sshPort( self, port ):
+        self._sshPort = port
+
     def setCloserCommand( self, command ):
         self._closer = command
 
     def background( self, cleanup = False ):
-        sshCommand = [ 'ssh', self._sshTarget , self._closer, '--quit-when-told', '--killer', self._killer, self._hexedPickle() ]
+        sshCommand = [ 'ssh', self._sshTarget , '-p', str(self._sshPort), self._closer, '--quit-when-told', '--killer', self._killer, self._hexedPickle() ]
         self._process = subprocess.Popen( sshCommand, stdin = subprocess.PIPE, ** self._ownKwargs )
         if cleanup:
             Remote._cleanup.append( self )
 
     def foreground( self, check = True ):
-        sshCommand = [ 'ssh', self._sshTarget, self._closer, '--killer', self._killer, self._hexedPickle() ]
+        sshCommand = [ 'ssh', self._sshTarget, '-p', str(self._sshPort), self._closer, '--killer', self._killer, self._hexedPickle() ]
         try:
             if check:
                 return subprocess.check_call( sshCommand, ** self._ownKwargs )
@@ -77,14 +86,14 @@ class Remote( object ):
             raise RemoteProcessError( self._remotePopenDetails, e )
 
     def output( self ):
-        sshCommand = [ 'ssh', self._sshTarget, self._closer, '--killer', self._killer, self._hexedPickle() ]
+        sshCommand = [ 'ssh', self._sshTarget, '-p', str(self._sshPort), self._closer, '--killer', self._killer, self._hexedPickle() ]
         try:
             return subprocess.check_output( sshCommand, ** self._ownKwargs )
         except subprocess.CalledProcessError as e:
             raise RemoteProcessError( self._remotePopenDetails, e )
 
     def liveMonitor( self, onOutput, onProcessEnd = None, cleanup = False ):
-        sshCommand = [ 'ssh', self._sshTarget , self._closer, '--quit-when-told', '--killer', self._killer, self._hexedPickle() ]
+        sshCommand = [ 'ssh', self._sshTarget , '-p', str(self._sshPort), self._closer, '--quit-when-told', '--killer', self._killer, self._hexedPickle() ]
         self._process = pimped_subprocess.PimpedSubprocess( sshCommand, stdin = subprocess.PIPE, ** self._ownKwargs )
         self._process.onOutput( onOutput )
         if onProcessEnd is not None:
